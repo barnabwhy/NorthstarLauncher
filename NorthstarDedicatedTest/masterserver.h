@@ -98,6 +98,9 @@ public:
 	bool m_bHasMainMenuPromoData = false;
 	MainMenuPromoData m_MainMenuPromoData;
 
+	std::string m_hostname;
+	int maxRequestTries = 5;
+
 private:
 	void SetCommonHttpClientOptions(CURL* curl);
 
@@ -106,7 +109,7 @@ public:
 	void ClearServerList();
 	void RequestServerList();
 	void RequestMainMenuPromos();
-	void AuthenticateOriginWithMasterServer(char* uid, char* originToken);
+	void AuthenticateOriginWithMasterServer(char* uid, char* originToken, int tries);
 	void AuthenticateWithOwnServer(char* uid, char* playerToken);
 	void AuthenticateWithServer(char* uid, char* playerToken, char* serverId, char* password);
 	void AddSelfToServerList(int port, int authPort, char* name, char* description, char* map, char* playlist, int maxPlayers, char* password);
@@ -114,6 +117,8 @@ public:
 	void UpdateServerPlayerCount(int playerCount);
 	void WritePlayerPersistentData(char* playerId, char* pdata, size_t pdataSize);
 	void RemoveSelfFromServerList();
+
+	void FindAlternativeHost();
 };
 std::string unescape_unicode(const std::string &str);
 void UpdateServerInfoFromUnicodeToUTF8();
@@ -121,3 +126,4 @@ void InitialiseSharedMasterServer(HMODULE baseAddress);
 
 extern MasterServerManager* g_MasterServerManager;
 extern ConVar* Cvar_ns_masterserver_hostname;
+extern ConVar* Cvar_ns_masterserver_hostname_list;

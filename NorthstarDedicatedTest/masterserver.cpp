@@ -13,10 +13,15 @@
 #include "misccommands.h"
 #include <cstring>
 #include <regex>
+#include <iostream>
+#include <vector>
+#include <sstream>
 // NOTE for anyone reading this: we used to use httplib for requests here, but it had issues, so we're moving to curl now for masterserver requests
 // so httplib is used exclusively for server stuff now
 
 ConVar* Cvar_ns_masterserver_hostname;
+ConVar* Cvar_ns_masterserver_hostname_list;
+
 ConVar* Cvar_ns_report_server_to_masterserver;
 ConVar* Cvar_ns_report_sp_server_to_masterserver;
 
@@ -146,6 +151,25 @@ RemoteServerInfo::RemoteServerInfo(const char* newId, const char* newName, const
 	maxPlayers = newMaxPlayers;
 }
 
+void MasterServerManager::FindAlternativeHost()
+{
+	std::string s = Cvar_ns_masterserver_hostname_list->m_pszString;
+	const char delim = '*';
+
+	std::vector<std::string> result;
+	std::stringstream s_stream(s); //create string stream from the string
+	while (s_stream.good()) {
+		std::string substr;
+		std::getline(s_stream, substr, ','); //get first string delimited by comma
+		result.push_back(substr);
+	}
+
+	int random_integer = rand() % result.size();
+
+	g_MasterServerManager->m_hostname = result.at(random_integer);
+	spdlog::info("Chose hostname {} with index {}", g_MasterServerManager->m_hostname, random_integer);
+}
+
 void MasterServerManager::SetCommonHttpClientOptions(CURL* curl)
 {
 	curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
@@ -174,7 +198,7 @@ size_t CurlWriteToStringBufferCallback(char* contents, size_t size, size_t nmemb
 	return size * nmemb;
 }
 
-void MasterServerManager::AuthenticateOriginWithMasterServer(char* uid, char* originToken)
+void MasterServerManager::AuthenticateOriginWithMasterServer(char* uid, char* originToken, int tries)
 {
 	if (m_bOriginAuthWithMasterServerInProgress)
 		return;
@@ -231,6 +255,9 @@ void MasterServerManager::AuthenticateOriginWithMasterServer(char* uid, char* or
 			{
 				spdlog::error("Failed performing northstar origin auth: error {}", curl_easy_strerror(result));
 				m_successfullyConnected = false;
+
+				//FindAlternativeHost();
+				//AuthenticateOriginWithMasterServer((char*)(uidStr.c_str()), (char*)(tokenStr.c_str()), triesNum + 1);
 			}
 
 			// we goto this instead of returning so we always hit this
@@ -1148,12 +1175,13 @@ void CHostState__State_GameShutdownHook(CHostState* hostState)
 
 MasterServerManager::MasterServerManager() : m_pendingConnectionInfo{}, m_ownServerId{ "" }, m_ownClientAuthToken{ "" }
 {
-
+	g_MasterServerManager->m_hostname = Cvar_ns_masterserver_hostname->m_pszString;
 }
 
 void InitialiseSharedMasterServer(HMODULE baseAddress)
 {
 	Cvar_ns_masterserver_hostname = RegisterConVar("ns_masterserver_hostname", "127.0.0.1", FCVAR_NONE, "");
+	Cvar_ns_masterserver_hostname_list = RegisterConVar("ns_masterserver_hostname_list", "127.0.0.1", FCVAR_NONE, "");
 	// unfortunately lib doesn't let us specify a port and still have https work
 	//Cvar_ns_masterserver_port = RegisterConVar("ns_masterserver_port", "8080", FCVAR_NONE, "");
 
