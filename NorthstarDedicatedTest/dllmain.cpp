@@ -42,6 +42,7 @@
 #include "pch.h"
 #include "plugin_abi.h"
 #include "plugins.h"
+#include "clientmaterialsystem.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
@@ -241,6 +242,7 @@ bool InitialiseNorthstar()
 		AddDllLoadCallback("client.dll", InitialiseClientChatHooks);
 		AddDllLoadCallback("client.dll", InitialiseLocalChatWriter);
 		AddDllLoadCallback("client.dll", InitialiseScriptServerToClientStringCommands);
+		AddDllLoadCallback("materialsystem_dx11.dll", InitialiseClientMaterialSystem);
 	}
 
 	AddDllLoadCallback("engine.dll", InitialiseEngineSpewFuncHooks);
