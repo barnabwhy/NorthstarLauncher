@@ -1486,6 +1486,7 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="clientmaterialsystem.h">
+    <ClInclude Include="clientvideooverrides.h">
       <Filter>Header Files\Client</Filter>
     </ClInclude>
   </ItemGroup>
@@ -1644,6 +1645,7 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="clientmaterialsystem.cpp">
+    <ClCompile Include="clientvideooverrides.cpp">
       <Filter>Source Files\Client</Filter>
     </ClCompile>
   </ItemGroup>

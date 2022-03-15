@@ -38,11 +38,12 @@
 #include "clientchathooks.h"
 #include "localchatwriter.h"
 #include "scriptservertoclientstringcommand.h"
-#include <string.h>
-#include "pch.h"
 #include "plugin_abi.h"
 #include "plugins.h"
+#include "clientvideooverrides.h"
 #include "clientmaterialsystem.h"
+#include <string.h>
+#include "pch.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
@@ -242,6 +243,7 @@ bool InitialiseNorthstar()
 		AddDllLoadCallback("client.dll", InitialiseClientChatHooks);
 		AddDllLoadCallback("client.dll", InitialiseLocalChatWriter);
 		AddDllLoadCallback("client.dll", InitialiseScriptServerToClientStringCommands);
+		AddDllLoadCallback("client.dll", InitialiseClientVideoOverrides);
 		AddDllLoadCallback("materialsystem_dx11.dll", InitialiseClientMaterialSystem);
 	}
 
