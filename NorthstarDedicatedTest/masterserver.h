@@ -73,7 +73,7 @@ class MasterServerManager
   public:
 	char m_ownServerId[33];
 	char m_ownServerAuthToken[33];
-	char m_ownClientAuthToken[33];
+	char m_ownClientAuthToken[65];
 
 	std::string m_ownModInfoJson;
 	std::string ns_auth_srvName; // Unicode unescaped version of Cvar_ns_auth_servername for support in cjk characters

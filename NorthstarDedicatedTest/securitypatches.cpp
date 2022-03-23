@@ -13,7 +13,7 @@ bool IsValveModHook()
 	// basically: by default r2 isn't set as a valve mod, meaning that m_bRestrictServerCommands is false
 	// this is HORRIBLE for security, because it means servers can run arbitrary concommands on clients
 	// especially since we have script commands this could theoretically be awful
-	return !CommandLine()->CheckParm("-norestrictservercommands");
+	return !CommandLine()->CheckParm("-vanillasupport") && !CommandLine()->CheckParm("-norestrictservercommands");
 }
 
 typedef bool (*SVC_CmdKeyValues__ReadFromBufferType)(void* a1, void* a2);
@@ -27,7 +27,9 @@ void InitialiseClientEngineSecurityPatches(HMODULE baseAddress)
 
 	// note: this could break some things
 	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x1C6360, &IsValveModHook, reinterpret_cast<LPVOID*>(&IsValveMod));
-	ENABLER_CREATEHOOK(hook, (char*)baseAddress + 0x222E70, &SVC_CmdKeyValues__ReadFromBufferHook, reinterpret_cast<LPVOID*>(&SVC_CmdKeyValues__ReadFromBuffer));
+	ENABLER_CREATEHOOK(
+		hook, (char*)baseAddress + 0x222E70, &SVC_CmdKeyValues__ReadFromBufferHook,
+		reinterpret_cast<LPVOID*>(&SVC_CmdKeyValues__ReadFromBuffer));
 
 	// patches to make commands run from client/ui script still work
 	// note: this is likely preventable in a nicer way? test prolly

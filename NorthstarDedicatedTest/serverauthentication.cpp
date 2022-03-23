@@ -14,6 +14,7 @@
 #include <filesystem>
 #include <thread>
 #include "configurables.h"
+#include "vanillasupport.h"
 
 const char* AUTHSERVER_VERIFY_STRING = "I am a northstar server!";
 
