@@ -41,6 +41,7 @@
 #include "plugin_abi.h"
 #include "plugins.h"
 #include "clientvideooverrides.h"
+#include "vanillasupport.h"
 #include <string.h>
 #include "pch.h"
 
@@ -208,6 +209,9 @@ bool InitialiseNorthstar()
 	AddDllLoadCallback("engine.dll", InitialiseEngineGameUtilFunctions);
 	AddDllLoadCallback("server.dll", InitialiseServerGameUtilFunctions);
 
+	// vanilla support before most but the squirrel func after
+	AddDllLoadCallback("engine.dll", InitialiseVanillaSupport);
+
 	// dedi patches
 	{
 		AddDllLoadCallbackForDedicatedServer("tier0.dll", InitialiseDedicatedOrigin);
@@ -270,6 +274,9 @@ bool InitialiseNorthstar()
 	AddDllLoadCallback("engine.dll", InitialiseMaxPlayersOverride_Engine);
 	AddDllLoadCallback("client.dll", InitialiseMaxPlayersOverride_Client);
 	AddDllLoadCallback("server.dll", InitialiseMaxPlayersOverride_Server);
+
+	// vanilla support before most but the squirrel func after
+	AddDllLoadCallback("client.dll", InitialiseVanillaSupportSquirrel);
 
 	// mod manager after everything else
 	AddDllLoadCallback("engine.dll", InitialiseModManager);

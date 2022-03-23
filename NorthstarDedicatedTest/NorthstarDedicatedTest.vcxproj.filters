@@ -1488,6 +1488,9 @@
     <ClInclude Include="clientvideooverrides.h">
       <Filter>Header Files\Client</Filter>
     </ClInclude>
+    <ClInclude Include="vanillasupport.h">
+      <Filter>Header Files\Shared\Mods</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -1645,6 +1648,9 @@
     </ClCompile>
     <ClCompile Include="clientvideooverrides.cpp">
       <Filter>Source Files\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="vanillasupport.cpp">
+      <Filter>Source Files\Shared\Mods</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

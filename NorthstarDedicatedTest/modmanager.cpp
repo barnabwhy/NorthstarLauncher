@@ -16,6 +16,7 @@
 #include "filesystem.h"
 #include "rpakfilesystem.h"
 #include "configurables.h"
+#include "vanillasupport.h"
 
 ModManager* g_ModManager;
 
@@ -83,6 +84,13 @@ Mod::Mod(fs::path modDir, char* jsonBuf)
 	{
 		spdlog::info("Mod file {} is missing a LoadPriority, consider adding one", (modDir / "mod.json").string());
 		LoadPriority = 0;
+	}
+
+	// check vanilla support of the mod if we are supporting vanilla
+	if (g_usingVanillaSupport && (!modJson.HasMember("SupportsVanilla") || !modJson["SupportsVanilla"].GetBool()))
+	{
+		spdlog::error("Vanilla support is currently enabled, however mod \"{}\" is not compatible. Skipping mod.", Name);
+		return;
 	}
 
 	// mod convars
@@ -306,8 +314,7 @@ void ModManager::LoadMods()
 				dVpkJson.Parse<rapidjson::ParseFlag::kParseCommentsFlag | rapidjson::ParseFlag::kParseTrailingCommasFlag>(
 					vpkJsonStringStream.str().c_str());
 
-				bUseVPKJson =
-					!dVpkJson.HasParseError() && dVpkJson.IsObject();
+				bUseVPKJson = !dVpkJson.HasParseError() && dVpkJson.IsObject();
 			}
 
 			for (fs::directory_entry file : fs::directory_iterator(mod.ModDirectory / "vpk"))
@@ -325,7 +332,8 @@ void ModManager::LoadMods()
 						(file.path().parent_path() / formattedPath.substr(strlen("english"), formattedPath.find(".bsp") - 3)).string();
 
 					ModVPKEntry& modVpk = mod.Vpks.emplace_back();
-					modVpk.m_bAutoLoad = !bUseVPKJson || (dVpkJson.HasMember("Preload") && dVpkJson["Preload"].IsObject() && dVpkJson["Preload"].HasMember(vpkName) && dVpkJson["Preload"][vpkName].IsTrue());
+					modVpk.m_bAutoLoad = !bUseVPKJson || (dVpkJson.HasMember("Preload") && dVpkJson["Preload"].IsObject() &&
+														  dVpkJson["Preload"].HasMember(vpkName) && dVpkJson["Preload"][vpkName].IsTrue());
 					modVpk.m_sVpkPath = vpkName;
 
 					if (m_hasLoadedMods && modVpk.m_bAutoLoad)
@@ -353,8 +361,7 @@ void ModManager::LoadMods()
 				dRpakJson.Parse<rapidjson::ParseFlag::kParseCommentsFlag | rapidjson::ParseFlag::kParseTrailingCommasFlag>(
 					rpakJsonStringStream.str().c_str());
 
-				bUseRpakJson =
-					!dRpakJson.HasParseError() && dRpakJson.IsObject();
+				bUseRpakJson = !dRpakJson.HasParseError() && dRpakJson.IsObject();
 			}
 
 			// read pak aliases
@@ -378,11 +385,13 @@ void ModManager::LoadMods()
 					std::string pakName(file.path().filename().string());
 
 					ModRpakEntry& modPak = mod.Rpaks.emplace_back();
-					modPak.m_bAutoLoad = !bUseRpakJson || (dRpakJson.HasMember("Preload") && dRpakJson["Preload"].IsObject() && dRpakJson["Preload"].HasMember(pakName) && dRpakJson["Preload"][pakName].IsTrue());
+					modPak.m_bAutoLoad =
+						!bUseRpakJson || (dRpakJson.HasMember("Preload") && dRpakJson["Preload"].IsObject() &&
+										  dRpakJson["Preload"].HasMember(pakName) && dRpakJson["Preload"][pakName].IsTrue());
 					modPak.m_sPakPath = pakName;
 
 					// not using atm because we need to resolve path to rpak
-					//if (m_hasLoadedMods && modPak.m_bAutoLoad)
+					// if (m_hasLoadedMods && modPak.m_bAutoLoad)
 					//	g_PakLoadManager->LoadPakAsync(pakName.c_str());
 				}
 			}
