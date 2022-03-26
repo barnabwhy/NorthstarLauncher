@@ -20,7 +20,6 @@ void InitialiseVanillaSupport(HMODULE baseAddress)
 		spdlog::info("Vanilla support enabled");
 		g_usingVanillaSupport = true;
 	}
-	spdlog::info("Vanilla support enabled after thing");
 }
 
 void InitialiseVanillaSupportSquirrel(HMODULE baseAddress)
