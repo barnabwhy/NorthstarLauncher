@@ -85,6 +85,8 @@ class ServerAuthenticationManager
   public:
 	std::mutex m_authDataMutex;
 	std::unordered_map<std::string, AuthData> m_authData;
+	std::mutex m_authedPlayersMutex;
+	std::unordered_map<std::string, std::string> m_authedPlayers;
 	std::unordered_map<void*, AdditionalPlayerData> m_additionalPlayerData;
 	std::vector<UnconnectedPlayerSendData> m_unconnectedPlayerSendData;
 	bool m_runningPlayerAuthThread = false;
@@ -97,6 +99,9 @@ class ServerAuthenticationManager
 	bool AuthenticatePlayer(void* player, int64_t uid, char* authToken);
 	char* VerifyPlayerName(void* player, char* authToken, char* name);
 	bool RemovePlayerAuthData(void* player);
+	bool HasAuthedPlayer(void* player);
+	void CorrectAuthedPlayerName(void* player);
+	bool RemoveAuthedPlayer(void* player);
 	void WritePersistentData(void* player);
 	bool CheckPlayerChatRatelimit(void* player);
 };

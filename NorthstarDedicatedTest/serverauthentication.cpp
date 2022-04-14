@@ -183,6 +183,7 @@ bool ServerAuthenticationManager::AuthenticatePlayer(void* player, int64_t uid, 
 		if (!strcmp(strUid.c_str(), authData.uid)) // connecting client's uid is the same as auth's uid
 		{
 			authFail = false;
+
 			// uuid
 			strcpy((char*)player + 0xF500, strUid.c_str());
 
@@ -277,6 +278,47 @@ bool ServerAuthenticationManager::RemovePlayerAuthData(void* player)
 	return false;
 }
 
+bool ServerAuthenticationManager::HasAuthedPlayer(void* player)
+{
+	for (auto& auth : m_authedPlayers)
+	{
+		if (!strcmp((char*)player + 0xF500, auth.first.c_str()))
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+void ServerAuthenticationManager::CorrectAuthedPlayerName(void* player)
+{
+	for (auto& auth : m_authedPlayers)
+	{
+		if (!strcmp((char*)player + 0xF500, auth.first.c_str()) && strcmp((char*)player + 0x16, auth.second.c_str()))
+		{
+			strcpy((char*)player + 0x16, auth.second.c_str());
+		}
+	}
+}
+
+bool ServerAuthenticationManager::RemoveAuthedPlayer(void* player)
+{
+	for (auto& auth : m_authedPlayers)
+	{
+		if (!strcmp((char*)player + 0xF500, auth.first.c_str()))
+		{
+			// pretty sure this is fine, since we don't iterate after the erase
+			// i think if we iterated after it'd be undefined behaviour tho
+			std::lock_guard<std::mutex> guard(m_authedPlayersMutex);
+
+			m_authedPlayers.erase(auth.first);
+			return true;
+		}
+	}
+
+	return false;
+}
+
 void ServerAuthenticationManager::WritePersistentData(void* player)
 {
 	// we use 0x4 internally to mark clients as using remote persistence
@@ -358,14 +400,30 @@ bool CBaseClient__ConnectHook(void* self, char* name, __int64 netchan_ptr_arg, c
 		g_ServerAuthenticationManager->m_additionalPlayerData.insert(std::make_pair(self, additionalData));
 	}
 
+	if (!g_ServerAuthenticationManager->HasAuthedPlayer(self)) // if the player is not already in the list
+	{
+		std::string strUid = std::to_string(nextPlayerUid);
+		std::string strName(name);
+		g_ServerAuthenticationManager->m_authedPlayers.insert(std::make_pair(strUid, strName));
+	}
+
 	return ret;
 }
 
 void CBaseClient__ActivatePlayerHook(void* self)
 {
+
+	if (!g_ServerAuthenticationManager->HasAuthedPlayer(self)) // current uid and uid at start of connect don't match
+	{
+		CBaseClient__Disconnect(self, 1, "Invalid UID");
+		return;
+	}
+
+	g_ServerAuthenticationManager->CorrectAuthedPlayerName(self);
+
 	// if we're authed, write our persistent data
-	// RemovePlayerAuthData returns true if it removed successfully, i.e. on first call only, and we only want to write on >= second call
-	// (since this func is called on map loads)
+	// RemovePlayerAuthData returns true if it removed successfully, i.e. on first call only, and we only want to write on >= second
+	// call (since this func is called on map loads)
 	if (*((char*)self + 0x4A0) >= (char)0x3 && !g_ServerAuthenticationManager->RemovePlayerAuthData(self))
 	{
 		g_ServerAuthenticationManager->m_bForceReadLocalPlayerPersistenceFromDisk = false;
@@ -394,6 +452,7 @@ void CBaseClient__DisconnectHook(void* self, uint32_t unknownButAlways1, const c
 		// dcing, write persistent data
 		if (g_ServerAuthenticationManager->m_additionalPlayerData[self].needPersistenceWriteOnLeave)
 			g_ServerAuthenticationManager->WritePersistentData(self);
+		g_ServerAuthenticationManager->RemoveAuthedPlayer(self);
 		g_ServerAuthenticationManager->RemovePlayerAuthData(self); // won't do anything 99% of the time, but just in case
 	}
 
